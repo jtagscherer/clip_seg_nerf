@@ -27,6 +27,12 @@ def get_opts():
                         0 to disable (default), to enable,
                         a good value is 1e-3 for real scene and 1e-2 for synthetic scene
                         ''')
+    parser.add_argument('--clip_query', type=str, default='A green excavator',
+                        help='Text query for the CLIP loss')
+    parser.add_argument('--clip_start', type=int, default=15000,
+                        help='Global step after which CLIP loss should be used')
+    parser.add_argument('--clip_weight', type=float, default=0.5,
+                        help='Weight of the CLIP loss')
 
     # training options
     parser.add_argument('--batch_size', type=int, default=8192,

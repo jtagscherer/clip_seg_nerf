@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import clip
 from opt import get_opts
 import os
 import glob
@@ -21,7 +22,7 @@ from models.rendering import render, MAX_SAMPLES
 # optimizer, losses
 from apex.optimizers import FusedAdam
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from losses import NeRFLoss
+from losses import NeRFLoss, CLIPLoss
 
 # metrics
 from torchmetrics import (
@@ -58,7 +59,9 @@ class NeRFSystem(LightningModule):
         self.warmup_steps = 256
         self.update_interval = 16
 
-        self.loss = NeRFLoss(lambda_distortion=self.hparams.distortion_loss_w)
+        self.nerf_loss = NeRFLoss(lambda_distortion=self.hparams.distortion_loss_w)
+        self.clip_loss = CLIPLoss()
+
         self.train_psnr = PeakSignalNoiseRatio(data_range=1)
         self.val_psnr = PeakSignalNoiseRatio(data_range=1)
         self.val_ssim = StructuralSimilarityIndexMeasure(data_range=1)
@@ -108,6 +111,10 @@ class NeRFSystem(LightningModule):
         self.train_dataset.ray_sampling_strategy = self.hparams.ray_sampling_strategy
 
         self.test_dataset = dataset(split='test', **kwargs)
+
+        self.clip_query = torch.cat([clip.tokenize(self.hparams.clip_query)]).to(self.device)
+        self.clip_start = self.hparams.clip_start
+        self.clip_weight = self.hparams.clip_weight
 
     def configure_optimizers(self):
         # define additional parameters
@@ -163,14 +170,20 @@ class NeRFSystem(LightningModule):
                                            erode=self.hparams.dataset_name=='colmap')
 
         results = self(batch, split='train')
-        loss_d = self.loss(results, batch)
+        loss_d = self.nerf_loss(results, batch)
         if self.hparams.use_exposure:
             zero_radiance = torch.zeros(1, 3, device=self.device)
             unit_exposure_rgb = self.model.log_radiance_to_rgb(zero_radiance,
                                     **{'exposure': torch.ones(1, 1, device=self.device)})
             loss_d['unit_exposure'] = \
                 0.5*(unit_exposure_rgb-self.train_dataset.unit_exposure_rgb)**2
+
         loss = sum(lo.mean() for lo in loss_d.values())
+
+        if self.global_step > self.clip_start:
+            clip_loss = self.clip_loss(results, self.clip_query)
+            # writer.add_scalar("Loss/train/clip1", clip_loss, i)
+            loss = loss + clip_loss * self.clip_weight
 
         with torch.no_grad():
             self.train_psnr(results['rgb'], batch['rgb'])

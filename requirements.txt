@@ -11,3 +11,4 @@ scipy
 pymcubes
 trimesh
 dearpygui
+clip~=1.0
