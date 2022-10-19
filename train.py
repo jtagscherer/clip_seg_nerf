@@ -178,12 +178,10 @@ class NeRFSystem(LightningModule):
 
         if self.global_step % 100 == 0:
             print('Saving debug images...')
-            h = 90
+            h = 64
             rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=h)
             rgb_pred = (rgb_pred * 255).astype(np.uint8)
             imageio.imsave(os.path.join(self.debug_dir, f'{self.global_step:06d}.png'), rgb_pred)
-            del rgb_pred
-            torch.cuda.empty_cache()
 
         loss_d = self.nerf_loss(results, batch)
         if self.hparams.use_exposure:
