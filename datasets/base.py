@@ -10,6 +10,7 @@ class BaseDataset(Dataset):
         self.root_dir = root_dir
         self.split = split
         self.downsample = downsample
+        self.random_rays = True
 
     def read_intrinsics(self):
         raise NotImplementedError
@@ -26,10 +27,17 @@ class BaseDataset(Dataset):
                 img_idxs = np.random.choice(len(self.poses), self.batch_size)
             elif self.ray_sampling_strategy == 'same_image': # randomly select ONE image
                 img_idxs = np.random.choice(len(self.poses), 1)[0]
-            # randomly select pixels
-            # TODO: Add option to select patches rather than random rays!
-            pix_idxs = np.random.choice(self.img_wh[0]*self.img_wh[1], self.batch_size)
-            rays = self.rays[img_idxs, pix_idxs]
+
+            if self.random_rays:
+                # randomly select pixels
+                pix_idxs = np.random.choice(self.img_wh[0]*self.img_wh[1], self.batch_size)
+                rays = self.rays[img_idxs, pix_idxs]
+            else:
+                # select a patch from one image
+                pix_idxs = (self.img_wh[0]*self.img_wh[1])[0:89, 0:89]  # TODO: Randomize
+                img_idxs = np.random.choice(len(self.poses), 1)[0]
+                rays = self.rays[img_idxs, pix_idxs]
+
             sample = {'img_idxs': img_idxs, 'pix_idxs': pix_idxs,
                       'rgb': rays[:, :3]}
             if self.rays.shape[-1] == 4: # HDR-NeRF data
