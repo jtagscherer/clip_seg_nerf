@@ -177,7 +177,7 @@ class NeRFSystem(LightningModule):
         if self.global_step % 100 == 0:
             print('Saving debug images...')
             w, h = self.train_dataset.img_wh
-            rgb_pred = rearrange(results['rgb'].cpu().numpy(), '(h w) c -> h w c', h=h)
+            rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=h)
             rgb_pred = (rgb_pred * 255).astype(np.uint8)
             imageio.imsave(os.path.join(self.debug_dir, f'{self.global_step:06d}.png'), rgb_pred)
 
