@@ -67,10 +67,11 @@ class CLIPLoss(nn.Module):
         self.model, self.preprocess = clip.load("ViT-B/32", device="cuda")
 
     def forward(self, results, text):
-        similarities = []
+        '''similarities = []
 
         for image in results['rgb']:
             image = torch.nn.functional.upsample_bilinear(image, (224, 224))
             similarities.push(1 - self.model(image, text)[0] / 100)
 
-        return sum(similarities)
+        return sum(similarities)'''
+        return 1 - self.model(image, text)[0] / 100

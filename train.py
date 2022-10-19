@@ -170,6 +170,12 @@ class NeRFSystem(LightningModule):
                                            erode=self.hparams.dataset_name=='colmap')
 
         results = self(batch, split='train')
+
+        if self.global_step % 100 == 0:
+            print('Saving debug images...')
+            for i in range(0, 10):
+                print(results['rgb'][i].shape)
+
         loss_d = self.nerf_loss(results, batch)
         if self.hparams.use_exposure:
             zero_radiance = torch.zeros(1, 3, device=self.device)
@@ -180,10 +186,12 @@ class NeRFSystem(LightningModule):
 
         loss = sum(lo.mean() for lo in loss_d.values())
 
-        if self.global_step > self.clip_start:
+        # TODO: Render patches rather than random rays!
+        # TODO: Add debug code for ray rendering (output patches to images)
+        '''if self.global_step > self.clip_start:
             clip_loss = self.clip_loss(results, self.clip_query)
             # writer.add_scalar("Loss/train/clip1", clip_loss, i)
-            loss = loss + clip_loss * self.clip_weight
+            loss = loss + clip_loss * self.clip_weight'''
 
         with torch.no_grad():
             self.train_psnr(results['rgb'], batch['rgb'])
