@@ -112,12 +112,6 @@ class NeRFSystem(LightningModule):
         self.train_dataset = dataset(split=self.hparams.split, **kwargs)
         self.train_dataset.batch_size = self.hparams.batch_size
         self.train_dataset.ray_sampling_strategy = self.hparams.ray_sampling_strategy
-        self.train_dataloader = DataLoader(self.train_dataset,
-                                           num_workers=16,
-                                           persistent_workers=True,
-                                           batch_size=None,
-                                           pin_memory=True)
-        self.train_dataloader.random_rays = False
 
         self.test_dataset = dataset(split='test', **kwargs)
 
@@ -155,7 +149,13 @@ class NeRFSystem(LightningModule):
         return opts, [net_sch]
 
     def train_dataloader(self):
-        return self.train_dataloader
+        train_dataloader = DataLoader(self.train_dataset,
+                                           num_workers=16,
+                                           persistent_workers=True,
+                                           batch_size=None,
+                                           pin_memory=True)
+        train_dataloader.random_rays = False
+        return train_dataloader
 
     def val_dataloader(self):
         return DataLoader(self.test_dataset,
