@@ -78,6 +78,9 @@ class NeRFSystem(LightningModule):
         self.model.register_buffer('grid_coords',
             create_meshgrid3d(G, G, G, False, dtype=torch.int32).reshape(-1, 3))
 
+        self.debug_dir = f'debug/{self.hparams.dataset_name}/{self.hparams.exp_name}'
+        os.makedirs(self.debug_dir, exist_ok=True)
+
     def forward(self, batch, split):
         if split=='train':
             poses = self.poses[batch['img_idxs']]
@@ -173,8 +176,10 @@ class NeRFSystem(LightningModule):
 
         if self.global_step % 100 == 0:
             print('Saving debug images...')
-            for i in range(0, 10):
-                print(results['rgb'][i].shape)
+            w, h = self.train_dataset.img_wh
+            rgb_pred = rearrange(results['rgb'].cpu().numpy(), '(h w) c -> h w c', h=h)
+            rgb_pred = (rgb_pred * 255).astype(np.uint8)
+            imageio.imsave(os.path.join(self.debug_dir, f'{self.global_step:06d}.png'), rgb_pred)
 
         loss_d = self.nerf_loss(results, batch)
         if self.hparams.use_exposure:
