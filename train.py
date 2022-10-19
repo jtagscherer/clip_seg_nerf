@@ -182,6 +182,8 @@ class NeRFSystem(LightningModule):
             rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=h)
             rgb_pred = (rgb_pred * 255).astype(np.uint8)
             imageio.imsave(os.path.join(self.debug_dir, f'{self.global_step:06d}.png'), rgb_pred)
+            del rgb_pred
+            torch.cuda.empty_cache()
 
         loss_d = self.nerf_loss(results, batch)
         if self.hparams.use_exposure:
@@ -192,13 +194,6 @@ class NeRFSystem(LightningModule):
                 0.5*(unit_exposure_rgb-self.train_dataset.unit_exposure_rgb)**2
 
         loss = sum(lo.mean() for lo in loss_d.values())
-
-        # TODO: Render patches rather than random rays!
-        # TODO: Add debug code for ray rendering (output patches to images)
-        '''if self.global_step > self.clip_start:
-            clip_loss = self.clip_loss(results, self.clip_query)
-            # writer.add_scalar("Loss/train/clip1", clip_loss, i)
-            loss = loss + clip_loss * self.clip_weight'''
 
         with torch.no_grad():
             self.train_psnr(results['rgb'], batch['rgb'])
