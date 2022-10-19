@@ -35,7 +35,7 @@ def get_opts():
                         help='Weight of the CLIP loss')
 
     # training options
-    parser.add_argument('--batch_size', type=int, default=8192,
+    parser.add_argument('--batch_size', type=int, default=8100,
                         help='number of rays in a batch')
     parser.add_argument('--ray_sampling_strategy', type=str, default='all_images',
                         choices=['all_images', 'same_image'],
