@@ -34,7 +34,9 @@ class BaseDataset(Dataset):
                 rays = self.rays[img_idxs, pix_idxs]
             else:
                 # select a patch from one image
-                pix_idxs = np.arange(300000, 300000 + 90*90)  # TODO: Randomize
+                pix_idxs = np.arange(0, self.img_wh[0]*self.img_wh[1])\
+                    .reshape(self.img_wh[0], self.img_wh[1])[400:490, 400:490]\
+                    .flatten()  # TODO: Randomize patch position
                 img_idxs = np.random.choice(len(self.poses), 1)[0]
                 rays = self.rays[img_idxs, pix_idxs]
 
