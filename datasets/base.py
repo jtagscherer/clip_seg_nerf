@@ -10,7 +10,7 @@ class BaseDataset(Dataset):
         self.root_dir = root_dir
         self.split = split
         self.downsample = downsample
-        self.random_rays = True
+        self.random_rays = False
 
     def read_intrinsics(self):
         raise NotImplementedError
@@ -34,7 +34,7 @@ class BaseDataset(Dataset):
                 rays = self.rays[img_idxs, pix_idxs]
             else:
                 # select a patch from one image
-                pix_idxs = (self.img_wh[0]*self.img_wh[1])[0:89, 0:89]  # TODO: Randomize
+                pix_idxs = np.arange(300000, 300000 + 90*90)  # TODO: Randomize
                 img_idxs = np.random.choice(len(self.poses), 1)[0]
                 rays = self.rays[img_idxs, pix_idxs]
 
