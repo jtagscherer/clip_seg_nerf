@@ -196,7 +196,7 @@ class NeRFSystem(LightningModule):
         if self.global_step >= self.clip_start:
             prediction_image = results['rgb'].reshape(self.patch_size, self.patch_size, -1)
             prediction_image = prediction_image.permute(2, 0, 1).unsqueeze(0)
-            loss += self.clip_loss(prediction_image, self.clip_query) * self.clip_weight
+            loss += self.clip_loss(prediction_image, self.clip_query)[0][0] * self.clip_weight
 
         with torch.no_grad():
             self.train_psnr(results['rgb'], batch['rgb'])
