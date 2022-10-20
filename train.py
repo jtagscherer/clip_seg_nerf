@@ -199,13 +199,13 @@ class NeRFSystem(LightningModule):
         self.writer.add_scalar("Loss/train/nerf", loss, self.global_step)
 
         if self.global_step >= self.clip_start:
-            prediction_image = results['rgb'].reshape(self.patch_size, self.patch_size, -1)
-            prediction_image = prediction_image.permute(2, 0, 1).unsqueeze(0)
+            #prediction_image = results['rgb'].reshape(self.patch_size, self.patch_size, -1)
+            #prediction_image = prediction_image.permute(2, 0, 1).unsqueeze(0)
 
             # DEBUG
-            #rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
-            #rgb_pred = (rgb_pred * 255).astype(np.uint8)
-            imageio.imsave(os.path.join(self.debug_dir, f'clip-{self.global_step:06d}.png'), (prediction_image.detach().cpu() * 255).astype(np.uint8))
+            prediction_image = rearrange(results['rgb'], '(h w) c -> h w c', h=self.patch_size)
+            prediction_image = (prediction_image * 255).astype(np.uint8)
+            #imageio.imsave(os.path.join(self.debug_dir, f'clip-{self.global_step:06d}.png'), (prediction_image.detach().cpu() * 255).astype(np.uint8))
 
             c_loss = self.clip_loss(prediction_image, self.clip_query)[0][0]
             self.writer.add_scalar("Loss/train/clip", c_loss, self.global_step)
