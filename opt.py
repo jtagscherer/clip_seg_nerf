@@ -37,6 +37,8 @@ def get_opts():
     # training options
     parser.add_argument('--patch_size', type=int, default=64,
                         help='size of quadratic rendered patch when not using random rays')
+    parser.add_argument('--patch_sampling_size', type=int, default=4,
+                        help='size of each step when sampling rays from a patch')
     parser.add_argument('--batch_size', type=int, default=64*64,
                         help='number of rays in a batch')
     parser.add_argument('--ray_sampling_strategy', type=str, default='all_images',

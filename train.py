@@ -112,6 +112,7 @@ class NeRFSystem(LightningModule):
         self.train_dataset = dataset(split=self.hparams.split, **kwargs)
         self.train_dataset.batch_size = self.hparams.batch_size
         self.train_dataset.patch_size = self.hparams.patch_size
+        self.train_dataset.patch_sampling_size = self.hparams.patch_sampling_size
         self.train_dataset.ray_sampling_strategy = self.hparams.ray_sampling_strategy
 
         self.test_dataset = dataset(split='test', **kwargs)

@@ -34,9 +34,14 @@ class BaseDataset(Dataset):
                 rays = self.rays[img_idxs, pix_idxs]
             else:
                 # select a patch from one image
-                pix_idxs = np.arange(0, self.img_wh[0]*self.img_wh[1])\
-                    .reshape(self.img_wh[0], self.img_wh[1])[400:(400 + self.patch_size), 400:(400 + self.patch_size)]\
-                    .flatten()  # TODO: Randomize patch position
+                patch_start_x = 300
+                patch_end_x = 300 + (self.patch_size * self.patch_sampling_size)
+                patch_start_y = 300
+                patch_end_y = 300 + (self.patch_size * self.patch_sampling_size)
+
+                pix_idxs = np.arange(0, self.img_wh[0] * self.img_wh[1]).reshape(self.img_wh[0], self.img_wh[1])[
+                           patch_start_x:patch_end_x:self.patch_sampling_size,
+                           patch_start_y:patch_end_y:self.patch_sampling_size].flatten()  # TODO: Randomize patch position
                 img_idxs = np.random.choice(len(self.poses), 1)[0]
                 rays = self.rays[img_idxs, pix_idxs]
 
