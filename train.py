@@ -111,6 +111,7 @@ class NeRFSystem(LightningModule):
                   'downsample': self.hparams.downsample}
         self.train_dataset = dataset(split=self.hparams.split, **kwargs)
         self.train_dataset.batch_size = self.hparams.batch_size
+        self.train_dataset.patch_size = self.hparams.patch_size
         self.train_dataset.ray_sampling_strategy = self.hparams.ray_sampling_strategy
 
         self.test_dataset = dataset(split='test', **kwargs)
@@ -118,6 +119,7 @@ class NeRFSystem(LightningModule):
         self.clip_query = torch.cat([clip.tokenize(self.hparams.clip_query)]).to(self.device)
         self.clip_start = self.hparams.clip_start
         self.clip_weight = self.hparams.clip_weight
+        self.patch_size = self.hparams.patch_size
 
     def configure_optimizers(self):
         # define additional parameters
@@ -149,13 +151,11 @@ class NeRFSystem(LightningModule):
         return opts, [net_sch]
 
     def train_dataloader(self):
-        train_dataloader = DataLoader(self.train_dataset,
-                                           num_workers=16,
-                                           persistent_workers=True,
-                                           batch_size=None,
-                                           pin_memory=True)
-        train_dataloader.random_rays = False
-        return train_dataloader
+        return DataLoader(self.train_dataset,
+                          num_workers=16,
+                          persistent_workers=True,
+                          batch_size=None,
+                          pin_memory=True)
 
     def val_dataloader(self):
         return DataLoader(self.test_dataset,
@@ -178,8 +178,7 @@ class NeRFSystem(LightningModule):
 
         if self.global_step % 100 == 0:
             print('Saving debug images...')
-            h = 64
-            rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=h)
+            rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
             rgb_pred = (rgb_pred * 255).astype(np.uint8)
             imageio.imsave(os.path.join(self.debug_dir, f'{self.global_step:06d}.png'), rgb_pred)
 
