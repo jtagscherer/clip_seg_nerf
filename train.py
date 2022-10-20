@@ -215,7 +215,7 @@ class NeRFSystem(LightningModule):
         self.log('train/vr_s', results['vr_samples']/len(batch['rgb']), True)
         self.log('train/psnr', self.train_psnr, True)
 
-        writer.flush()
+        self.writer.flush()
         return loss
 
     def on_validation_start(self):
