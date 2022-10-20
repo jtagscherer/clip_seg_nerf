@@ -117,7 +117,7 @@ class NeRFSystem(LightningModule):
 
         self.test_dataset = dataset(split='test', **kwargs)
 
-        self.clip_query = torch.cat([clip.tokenize(self.hparams.clip_query)]).to(self.device)
+        self.clip_query = torch.cat([clip.tokenize(self.hparams.clip_query)]).cuda()
         self.clip_start = self.hparams.clip_start
         self.clip_weight = self.hparams.clip_weight
         self.patch_size = self.hparams.patch_size
