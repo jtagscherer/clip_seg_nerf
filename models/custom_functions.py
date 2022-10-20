@@ -151,7 +151,7 @@ class VolumeRenderer(torch.autograd.Function):
         sigmas, rgbs, deltas, ts, rays_a, \
         opacity, depth, rgb, ws = ctx.saved_tensors
         dL_dsigmas, dL_drgbs = \
-            vren.composite_train_bw(dL_dopacity, dL_ddepth, dL_drgb, dL_dws,
+            vren.composite_train_bw(dL_dopacity, dL_ddepth, dL_drgb.contiguous(), dL_dws,
                                     sigmas, rgbs, ws, deltas, ts,
                                     rays_a,
                                     opacity, depth, rgb,
