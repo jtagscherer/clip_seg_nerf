@@ -66,6 +66,11 @@ class CLIPLoss(nn.Module):
         super(CLIPLoss, self).__init__()
         self.model, self.preprocess = clip.load("ViT-B/32", device="cuda")
 
+        # Convert to FP32
+        for p in self.model.parameters():
+            p.data = p.data.float()
+            p.grad.data = p.grad.data.float()
+
     def forward(self, image, text):
         image = torch.nn.functional.upsample_bilinear(image, (224, 224))
         return 1 - self.model(image, text)[0] / 100
