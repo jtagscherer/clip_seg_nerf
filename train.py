@@ -24,6 +24,8 @@ from apex.optimizers import FusedAdam
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from losses import NeRFLoss, CLIPLoss
 
+from torch.utils.tensorboard import SummaryWriter
+
 # metrics
 from torchmetrics import (
     PeakSignalNoiseRatio, 
@@ -80,6 +82,8 @@ class NeRFSystem(LightningModule):
 
         self.debug_dir = f'debug/{self.hparams.dataset_name}/{self.hparams.exp_name}'
         os.makedirs(self.debug_dir, exist_ok=True)
+
+        self.writer = SummaryWriter()
 
     def forward(self, batch, split):
         if split=='train':
@@ -193,10 +197,14 @@ class NeRFSystem(LightningModule):
 
         loss = sum(lo.mean() for lo in loss_d.values())
 
+        writer.add_scalar("Loss/train/nerf", loss, self.global_step)
+
         if self.global_step >= self.clip_start:
             prediction_image = results['rgb'].reshape(self.patch_size, self.patch_size, -1)
             prediction_image = prediction_image.permute(2, 0, 1).unsqueeze(0)
-            loss += self.clip_loss(prediction_image, self.clip_query)[0][0] * self.clip_weight
+            c_loss = self.clip_loss(prediction_image, self.clip_query)[0][0]
+            writer.add_scalar("Loss/train/clip", c_loss, self.global_step)
+            loss += c_loss * self.clip_weight
 
         with torch.no_grad():
             self.train_psnr(results['rgb'], batch['rgb'])
@@ -208,6 +216,7 @@ class NeRFSystem(LightningModule):
         self.log('train/vr_s', results['vr_samples']/len(batch['rgb']), True)
         self.log('train/psnr', self.train_psnr, True)
 
+        writer.flush()
         return loss
 
     def on_validation_start(self):

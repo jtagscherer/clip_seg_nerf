@@ -12,3 +12,4 @@ pymcubes
 trimesh
 dearpygui
 clip~=1.0
+tensorboard>=2.0
