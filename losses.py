@@ -66,6 +66,10 @@ class CLIPLoss(nn.Module):
         super(CLIPLoss, self).__init__()
         self.model, self.preprocess = clip.load("ViT-B/32", device="cuda")
 
+        # Freeze the CLIP model itself
+        for param in self.model.parameters():
+            param.requires_grad = False
+
     def forward(self, image, text):
         image = torch.nn.functional.upsample_bilinear(image, (224, 224))
         return 1 - self.model(image, text)[0] / 100
