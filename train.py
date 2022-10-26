@@ -233,6 +233,9 @@ class NeRFSystem(LightningModule):
         logs['psnr'] = self.val_psnr.compute()
         self.val_psnr.reset()
 
+        prediction_image = rearrange(results['rgb'], '(h w) c -> c h w', h=self.patch_size).unsqueeze(0)
+        logs['clip_loss'] = self.clip_loss(prediction_image, self.clip_query)[0][0]
+
         w, h = self.train_dataset.img_wh
         rgb_pred = rearrange(results['rgb'], '(h w) c -> 1 c h w', h=h)
         rgb_gt = rearrange(rgb_gt, '(h w) c -> 1 c h w', h=h)
@@ -263,6 +266,12 @@ class NeRFSystem(LightningModule):
         ssims = torch.stack([x['ssim'] for x in outputs])
         mean_ssim = all_gather_ddp_if_available(ssims).mean()
         self.log('test/ssim', mean_ssim)
+
+        clip_losses = torch.stack([x['clip_loss'] for x in outputs])
+        mean_clip_loss = all_gather_ddp_if_available(clip_losses).mean()
+        self.log('test/clip_loss', mean_clip_loss)
+
+        self.log('test/samples', len(outputs))
 
         if self.hparams.eval_lpips:
             lpipss = torch.stack([x['lpips'] for x in outputs])
