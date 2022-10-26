@@ -198,11 +198,11 @@ class NeRFSystem(LightningModule):
 
         self.writer.add_scalar("Loss/train/nerf", loss, self.global_step)
 
-        if self.global_step >= self.clip_start:
+        '''if self.global_step >= self.clip_start:
             prediction_image = rearrange(results['rgb'], '(h w) c -> c h w', h=self.patch_size).unsqueeze(0)
             c_loss = self.clip_loss(prediction_image, self.clip_query)[0][0]
             self.writer.add_scalar("Loss/train/clip", c_loss, self.global_step)
-            loss += c_loss * self.clip_weight
+            loss += c_loss * self.clip_weight'''
 
         with torch.no_grad():
             self.train_psnr(results['rgb'], batch['rgb'])
