@@ -196,8 +196,8 @@ class NeRFSystem(LightningModule):
             before_gt = (before_gt * 255).astype(np.uint8)
             imageio.imsave(os.path.join(self.debug_dir, f'{self.global_step:06d}-before_gt.png'), before_gt)
 
-            results['rgb'], batch['rgb'] = self.diff_aug(sample=results['rgb'], ground_truth=batch['rgb'],
-                                                         patch_size=self.patch_size)
+        results['rgb'], batch['rgb'] = self.diff_aug(sample=results['rgb'], ground_truth=batch['rgb'],
+                                                     patch_size=self.patch_size)
 
         if self.global_step % 300 == 0:
             # DEBUG!
