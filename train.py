@@ -40,6 +40,9 @@ from pytorch_lightning.callbacks import TQDMProgressBar, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities.distributed import all_gather_ddp_if_available
 
+# augmentations
+from augmentations.diff import DiffAug
+
 from utils import slim_ckpt, load_ckpt
 
 import warnings; warnings.filterwarnings("ignore")
@@ -63,6 +66,8 @@ class NeRFSystem(LightningModule):
 
         self.nerf_loss = NeRFLoss(lambda_distortion=self.hparams.distortion_loss_w)
         self.clip_loss = CLIPLoss()
+
+        self.diff_aug = DiffAug()
 
         self.train_psnr = PeakSignalNoiseRatio(data_range=1)
         self.val_psnr = PeakSignalNoiseRatio(data_range=1)
@@ -180,6 +185,8 @@ class NeRFSystem(LightningModule):
                                            erode=self.hparams.dataset_name=='colmap')
 
         results = self(batch, split='train')
+
+        results['rgb'], batch['rgb'] = self.diff_aug(sample=results['rgb'], ground_truth=batch['rgb'])
 
         if self.global_step % 300 == 0:
             rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
