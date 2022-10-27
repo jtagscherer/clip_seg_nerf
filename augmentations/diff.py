@@ -4,20 +4,20 @@
 
 import torch
 import torch.nn.functional as F
+import numpy as np
+from einops import rearrange
 
 
 class DiffAug(object):
 
-    def __call__(self, sample, ground_truth, channels_first=True):
-        if not channels_first:
-            sample = sample.permute(0, 3, 1, 2)
-            ground_truth = ground_truth.permute(0, 3, 1, 2)
+    def __call__(self, sample, ground_truth, patch_size=0):
+        sample = rearrange(sample, '(h w) c -> c h w', h=patch_size).unsqueeze(0)
+        ground_truth = rearrange(ground_truth, '(h w) c -> c h w', h=patch_size).unsqueeze(0)
 
         sample, ground_truth = _augment(sample, ground_truth)
 
-        if not channels_first:
-            sample = sample.permute(0, 2, 3, 1)
-            ground_truth = ground_truth.permute(0, 2, 3, 1)
+        sample = rearrange(torch.squeeze(sample), 'c h w -> (h w) c', h=patch_size)
+        ground_truth = rearrange(torch.squeeze(ground_truth), 'c h w -> (h w) c', h=patch_size)
 
         return sample.contiguous(), ground_truth.contiguous()
 
@@ -47,7 +47,7 @@ def _augment(sample, ground_truth):
     ground_truth = rand_resize(ground_truth, resize_scale=resize_scale)
 
     cutout_ratio = 0.25
-    cutout_size = int(sample.size(2) * cutout_ratio + 0.5), int(x.size(3) * cutout_ratio + 0.5)
+    cutout_size = int(sample.size(2) * cutout_ratio + 0.5), int(sample.size(3) * cutout_ratio + 0.5)
     offset_x = torch.randint(0, sample.size(2) + (1 - cutout_size[0] % 2), size=[sample.size(0), 1, 1],
                              device=sample.device)
     offset_y = torch.randint(0, sample.size(3) + (1 - cutout_size[1] % 2), size=[sample.size(0), 1, 1],

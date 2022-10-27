@@ -186,7 +186,8 @@ class NeRFSystem(LightningModule):
 
         results = self(batch, split='train')
 
-        results['rgb'], batch['rgb'] = self.diff_aug(sample=results['rgb'], ground_truth=batch['rgb'])
+        results['rgb'], batch['rgb'] = self.diff_aug(sample=results['rgb'], ground_truth=batch['rgb'],
+                                                     patch_size=self.patch_size)
 
         if self.global_step % 300 == 0:
             rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
