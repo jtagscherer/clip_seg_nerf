@@ -186,8 +186,27 @@ class NeRFSystem(LightningModule):
 
         results = self(batch, split='train')
 
+        # DEBUG!
+        before_rgb = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
+        before_rgb = (before_rgb * 255).astype(np.uint8)
+        imageio.imsave(os.path.join(self.debug_dir, 'before_rgb.png'), before_rgb)
+
+        before_gt = rearrange(batch['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
+        before_gt = (before_gt * 255).astype(np.uint8)
+        imageio.imsave(os.path.join(self.debug_dir, 'before_gt.png'), before_gt)
+
         results['rgb'], batch['rgb'] = self.diff_aug(sample=results['rgb'], ground_truth=batch['rgb'],
                                                      patch_size=self.patch_size)
+
+        # DEBUG!
+        after_rgb = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
+        after_rgb = (after_rgb * 255).astype(np.uint8)
+        imageio.imsave(os.path.join(self.debug_dir, 'after_rgb.png'), after_rgb)
+
+        after_gt = rearrange(batch['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
+        after_gt = (after_gt * 255).astype(np.uint8)
+        imageio.imsave(os.path.join(self.debug_dir, 'after_gt.png'), after_gt)
+        raise Exception()
 
         if self.global_step % 300 == 0:
             rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
