@@ -186,7 +186,7 @@ class NeRFSystem(LightningModule):
 
         results = self(batch, split='train')
 
-        if self.global_step % 300 == 0:
+        '''if self.global_step % 300 == 0:
             # DEBUG!
             before_rgb = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
             before_rgb = (before_rgb * 255).astype(np.uint8)
@@ -207,7 +207,7 @@ class NeRFSystem(LightningModule):
 
             after_gt = rearrange(batch['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
             after_gt = (after_gt * 255).astype(np.uint8)
-            imageio.imsave(os.path.join(self.debug_dir, f'{self.global_step:06d}-after_gt.png'), after_gt)
+            imageio.imsave(os.path.join(self.debug_dir, f'{self.global_step:06d}-after_gt.png'), after_gt)'''
 
         if self.global_step % 300 == 0:
             rgb_pred = rearrange(results['rgb'].detach().cpu().numpy(), '(h w) c -> h w c', h=self.patch_size)
@@ -227,7 +227,9 @@ class NeRFSystem(LightningModule):
         self.writer.add_scalar("Loss/train/nerf", loss, self.global_step)
 
         if self.global_step >= self.clip_start:
-            prediction_image = rearrange(results['rgb'], '(h w) c -> c h w', h=self.patch_size).unsqueeze(0)
+            prediction_image, _ = self.diff_aug(sample=results['rgb'], ground_truth=batch['rgb'],
+                                                         patch_size=self.patch_size)
+            prediction_image = rearrange(prediction_image, '(h w) c -> c h w', h=self.patch_size).unsqueeze(0)
             c_loss = self.clip_loss(prediction_image, self.clip_query)[0][0]
             self.writer.add_scalar("Loss/train/clip", c_loss, self.global_step)
             loss += c_loss * self.clip_weight
